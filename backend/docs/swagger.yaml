@@ -1,0 +1,392 @@
+openapi: 3.0.3
+info:
+  title: Landmark Metropolitan University — Attendance Management API
+  description: |
+    Enterprise-grade RESTful API for the Hybrid School Attendance Management System.
+    Supports Administrator, Lecturer, and Student dashboards with real-time Socket.IO integration.
+  version: 1.0.0
+  contact:
+    name: Landmark Metropolitan University — IT Department
+    email: itsupport@landmark.edu.gh
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development server
+  - url: https://api.landmark.edu.gh/api/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Success:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+        data:   { type: object }
+
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string }
+        errors:  { type: array, items: { type: object } }
+
+    Pagination:
+      type: object
+      properties:
+        total:      { type: integer }
+        page:       { type: integer }
+        limit:      { type: integer }
+        totalPages: { type: integer }
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication & profile management
+  - name: Students
+    description: Student management
+  - name: Lecturers
+    description: Lecturer management
+  - name: Courses
+    description: Course management
+  - name: Classes
+    description: Timetable / schedule management
+  - name: Attendance
+    description: Core attendance engine
+  - name: Reports
+    description: Reporting & analytics
+  - name: Notifications
+    description: Notification system
+  - name: Audit
+    description: Audit & security logs
+  - name: Dashboard
+    description: Role-based dashboards
+
+paths:
+  # ─── Auth ────────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:       { type: string, example: "Kofi Boateng" }
+                email:      { type: string, format: email }
+                password:   { type: string, minLength: 8 }
+                role:       { type: string, enum: [student, lecturer] }
+                studentId:  { type: string }
+                department: { type: string }
+                phone:      { type: string }
+      responses:
+        '201': { description: Registered successfully }
+        '409': { description: Email already in use }
+        '422': { description: Validation error }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and receive JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      token: { type: string }
+                      user:  { type: object }
+        '401': { description: Invalid credentials }
+        '403': { description: Account locked or deactivated }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout and blacklist JWT
+      responses:
+        '200': { description: Logged out }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200': { description: Reset link sent if account exists }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password using token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:    { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200': { description: Password reset successfully }
+        '400': { description: Invalid or expired token }
+
+  /auth/profile:
+    get:
+      tags: [Auth]
+      summary: Get authenticated user's profile
+      responses:
+        '200': { description: Profile data }
+
+  # ─── Students ────────────────────────────────────────────────────────────────
+  /students:
+    get:
+      tags: [Students]
+      summary: List all students (admin/lecturer)
+      parameters:
+        - name: page;      in: query; schema: { type: integer }
+        - name: limit;     in: query; schema: { type: integer }
+        - name: search;    in: query; schema: { type: string }
+        - name: department; in: query; schema: { type: string }
+      responses:
+        '200': { description: Paginated students list }
+    post:
+      tags: [Students]
+      summary: Create a student account (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, studentId]
+              properties:
+                name:        { type: string }
+                email:       { type: string }
+                studentId:   { type: string }
+                department:  { type: string }
+                yearOfStudy: { type: integer }
+                phone:       { type: string }
+      responses:
+        '201': { description: Student created }
+
+  /students/{id}:
+    get:
+      tags: [Students]
+      summary: Get student details
+      parameters:
+        - name: id; in: path; required: true; schema: { type: integer }
+      responses:
+        '200': { description: Student record with courses }
+    put:
+      tags: [Students]
+      summary: Update student (admin only)
+      parameters:
+        - name: id; in: path; required: true; schema: { type: integer }
+      responses:
+        '200': { description: Updated }
+    delete:
+      tags: [Students]
+      summary: Deactivate student (admin only, soft delete)
+      parameters:
+        - name: id; in: path; required: true; schema: { type: integer }
+      responses:
+        '200': { description: Deactivated }
+
+  # ─── Attendance ───────────────────────────────────────────────────────────────
+  /attendance/start-session:
+    post:
+      tags: [Attendance]
+      summary: Start an attendance session (lecturer)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courseId, sessionDate, startTime]
+              properties:
+                courseId:    { type: integer }
+                sessionDate: { type: string, format: date }
+                startTime:   { type: string, example: "08:00" }
+                sessionType: { type: string, enum: [lecture, lab, tutorial, seminar] }
+      responses:
+        '201':
+          description: Session started with QR code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:  { type: integer }
+                  qrDataUrl:  { type: string }
+                  expiresAt:  { type: string, format: date-time }
+
+  /attendance/mark:
+    post:
+      tags: [Attendance]
+      summary: Mark attendance (student)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, method]
+              properties:
+                sessionId:  { type: integer }
+                method:     { type: string, enum: [qr, manual, gps] }
+                qrPayload:  { type: string, description: "Raw QR JSON string (required for qr method)" }
+      responses:
+        '200': { description: Attendance marked }
+        '409': { description: Already marked }
+        '403': { description: Not enrolled in course }
+
+  /attendance/session/{sessionId}:
+    get:
+      tags: [Attendance]
+      summary: Get full session attendance (lecturer)
+      parameters:
+        - name: sessionId; in: path; required: true; schema: { type: integer }
+      responses:
+        '200': { description: Session with per-student attendance list and summary }
+
+  # ─── Reports ──────────────────────────────────────────────────────────────────
+  /reports/daily:
+    get:
+      tags: [Reports]
+      summary: Daily attendance report
+      parameters:
+        - name: date; in: query; schema: { type: string, format: date }
+      responses:
+        '200': { description: Daily report data }
+
+  /reports/export/pdf/{type}:
+    get:
+      tags: [Reports]
+      summary: Export report as PDF
+      parameters:
+        - name: type; in: path; required: true; schema: { type: string, enum: [daily, weekly, monthly, student, low-attendance] }
+      responses:
+        '200':
+          description: PDF file download
+          content:
+            application/pdf: {}
+
+  /reports/export/excel/{type}:
+    get:
+      tags: [Reports]
+      summary: Export report as Excel (.xlsx)
+      parameters:
+        - name: type; in: path; required: true; schema: { type: string }
+      responses:
+        '200':
+          description: Excel file download
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {}
+
+  # ─── Notifications ────────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Get user's notifications (marks as read)
+      parameters:
+        - name: unreadOnly; in: query; schema: { type: boolean }
+      responses:
+        '200': { description: Notifications list }
+
+  /notifications/send:
+    post:
+      tags: [Notifications]
+      summary: Send notification (admin/lecturer)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, message]
+              properties:
+                recipientId:   { type: integer }
+                recipientRole: { type: string, enum: [student, lecturer, admin] }
+                courseId:      { type: integer }
+                title:         { type: string }
+                message:       { type: string }
+                type:          { type: string, enum: [info, warning, success, error] }
+                channel:       { type: string, enum: [in-app, email, all] }
+      responses:
+        '201': { description: Notification sent with recipient count }
+
+  # ─── Dashboard ────────────────────────────────────────────────────────────────
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Role-based dashboard data (auto-detected from JWT)
+      responses:
+        '200': { description: Dashboard stats tailored to user role }
+
+  # ─── Audit ───────────────────────────────────────────────────────────────────
+  /logs:
+    get:
+      tags: [Audit]
+      summary: All audit logs (admin only)
+      parameters:
+        - name: action;  in: query; schema: { type: string }
+        - name: userId;  in: query; schema: { type: integer }
+        - name: from;    in: query; schema: { type: string, format: date }
+        - name: to;      in: query; schema: { type: string, format: date }
+      responses:
+        '200': { description: Paginated audit logs }
+
+  /logs/security:
+    get:
+      tags: [Audit]
+      summary: Security-related events (admin only)
+      responses:
+        '200': { description: Login attempts, lockouts, auth failures }
+
+  /logs/activity:
+    get:
+      tags: [Audit]
+      summary: User activity logs (admin only)
+      responses:
+        '200': { description: Activity log }

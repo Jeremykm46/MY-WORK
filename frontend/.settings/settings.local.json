@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\ethio\\\\OneDrive\\\\Desktop\\\\XAMPP\\\\Documents\\\\My work\\\\frontend\")",
+      "Bash(Select-Object Name, LastWriteTime)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(Get-NetTCPConnection -State Listen -LocalPort 5173,4173 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -State Listen -LocalPort 58883,51001 -ErrorAction SilentlyContinue)",
+      "PowerShell(netstat -ano)",
+      "PowerShell(cd \"c:\\\\Users\\\\ethio\\\\OneDrive\\\\Desktop\\\\XAMPP\\\\Documents\\\\My work\\\\frontend\\\\edutrack-web\"; Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd \"c:\\\\Users\\\\ethio\\\\OneDrive\\\\Desktop\\\\XAMPP\\\\Documents\\\\My work\\\\frontend\\\\edutrack-web\"; npm run dev' -WindowStyle Normal; Write-Host \"React web server starting...\")",
+      "PowerShell(cd \"c:\\\\Users\\\\ethio\\\\OneDrive\\\\Desktop\\\\XAMPP\\\\Documents\\\\My work\\\\frontend\\\\edutrack-mobile\"; Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd \"c:\\\\Users\\\\ethio\\\\OneDrive\\\\Desktop\\\\XAMPP\\\\Documents\\\\My work\\\\frontend\\\\edutrack-mobile\"; flutter run -d chrome' -WindowStyle Normal; Write-Host \"Flutter mobile app starting...\")",
+      "PowerShell(cd \"c:\\\\Users\\\\ethio\\\\OneDrive\\\\Desktop\\\\XAMPP\\\\Documents\\\\My work\\\\frontend\\\\edutrack-web\"; Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd \"c:\\\\Users\\\\ethio\\\\OneDrive\\\\Desktop\\\\XAMPP\\\\Documents\\\\My work\\\\frontend\\\\edutrack-web\"; npm run dev' -WindowStyle Normal)"
+    ]
+  }
+}

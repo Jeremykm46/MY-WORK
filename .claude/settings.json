@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:3000/api/v1/reports/records -H \"Authorization: Bearer invalid\" -o /dev/null -w \"proxy status: %{http_code}\\\\n\")",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -X POST http://localhost:5000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"k.mensah@landmark.edu.gh\",\"password\":\"Lecturer@123\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"student1@landmark.edu.gh\",\"password\":\"Student@123\"}')"
+    ]
+  }
+}
