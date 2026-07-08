@@ -4,20 +4,14 @@ const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || err.status || 500;
   let message = err.message || 'Internal server error';
 
-  // MySQL errors
-  if (err.code === 'ER_DUP_ENTRY') {
+  // MongoDB duplicate key (unique index violation)
+  if (err.code === 11000) {
     statusCode = 409;
     message = 'A record with this information already exists.';
-  } else if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-    statusCode = 400;
-    message = 'Referenced record does not exist.';
-  } else if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-    statusCode = 409;
-    message = 'Cannot delete this record as it is referenced by other records.';
   }
 
-  // Validation errors
-  if (err.name === 'ValidationError') statusCode = 422;
+  // Mongoose schema validation errors
+  if (err.name === 'ValidationError' || err.name === 'CastError') statusCode = 400;
 
   // Don't leak internal details in production
   if (process.env.NODE_ENV === 'production' && statusCode === 500) {

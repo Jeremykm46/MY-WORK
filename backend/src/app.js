@@ -54,8 +54,16 @@ app.use(helmet({
 }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
+// FRONTEND_URL may be a comma-separated list (e.g. production domain + Vercel preview URLs).
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim());
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -114,7 +122,7 @@ app.use(`${API}/dashboard`, dashboardRoutes);
 // If a built frontend exists in the workspace, serve it as static files and
 // fall back to `index.html` for client-side routing. This makes it possible
 // to "merge" the frontend build into the backend server for production.
-const clientDist = path.join(__dirname, '../../frontend/edutrack-web/dist');
+const clientDist = path.join(__dirname, '../../frontend/Studenttrack-web/dist');
 if (fs.existsSync(clientDist)) {
   app.use(express.static(clientDist));
   app.get('*', (req, res) => {

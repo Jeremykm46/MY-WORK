@@ -10,13 +10,13 @@ RUN npm ci --omit=dev
 # Frontend build dependencies
 FROM base AS deps-frontend
 WORKDIR /app/frontend
-COPY frontend/edutrack-web/package*.json ./
+COPY frontend/Studenttrack-web/package*.json ./
 RUN npm install
 
 # Build the frontend
 FROM deps-frontend AS build-frontend
 WORKDIR /app/frontend
-COPY frontend/edutrack-web ./
+COPY frontend/Studenttrack-web ./
 RUN npm run build
 
 # Production image
@@ -26,7 +26,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=deps-backend /app/backend/node_modules ./node_modules
 COPY backend ./
-COPY --from=build-frontend /app/frontend/dist ./frontend/edutrack-web/dist
+COPY --from=build-frontend /app/frontend/dist ./frontend/Studenttrack-web/dist
 
 RUN mkdir -p logs uploads
 
